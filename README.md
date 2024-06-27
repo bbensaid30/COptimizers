@@ -15,7 +15,7 @@ A version using the Shaman Library is also available to control the numerical er
 * LMs: many variants of the Levenberg-Marquardt algorithm
 * perso: Armijo backtracking optimizers
 * perte: loss functions
-* propagation: direct propagation, backpropagation and commputation of the quasi-hessian
+* propagation: direct propagation, backpropagation and computation of the quasi-hessian
 * scaling: useful for some LM algorithms
 * Sclassic: stochastic optimizers (SGD, RRGD, RRAdam, ...) with a deterministic stopping criteria
 * Sperso: stochastic classical Armijo suggested by Vaswani
@@ -24,10 +24,12 @@ A version using the Shaman Library is also available to control the numerical er
 * Straining: the function to run a stochastic training
 * test: test of deterministic algorithms on analytical benchmarks
 * tirage: run in parallel and store a lot of training results for deterministic optimizers (different initializations)
+* training: the function to run a deterministic training
 * utilities: some useful functions 
 
 ## How to run it ?
 A makefile is given as a example as well as for the shaman version. 
 Some installations are needed: Eigen3, EigenRand and Shaman (well explained in the corresponding gits).
 The folder "Mains" provide a lot of examples: how to use the test files, use real datasets, ... 
+To know which hyperparameters correspond to a certain optimizer, see its definition in the .h files. 
 
