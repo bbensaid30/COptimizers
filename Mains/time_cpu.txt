@@ -1,0 +1,68 @@
+omp_set_num_threads(1);
+    Eigen::setNbThreads(1);
+
+    int const nbevals=100000000;
+
+    Eigen::ArrayXd X = Eigen::ArrayXXd::Constant(nbevals,1,2);
+    double x = 2;
+
+    Eigen::SArrayXd Y = Eigen::SArrayXd::Constant(nbevals,1,2);
+    Sdouble y = 2;
+
+    std::chrono::high_resolution_clock::time_point t1_loop = std::chrono::high_resolution_clock::now();
+    for (int i=0; i<nbevals; i++)
+    {   
+        //x+x;
+        //y+y;
+
+        //x*x;
+        //y*y;
+
+        //std::pow(x,2);
+
+        //std::exp(x);
+        //Sstd::exp(y);
+
+        //std::pow(x,2);
+        //Sstd::pow(y,2);
+
+        //std::tanh(x);
+        //Sstd::tanh(y);
+
+        //1/(1+std::exp(-x));
+        //1/(1+Sstd::exp(-y));
+        
+        //(0 < x) ? x : 0;
+        (0 < y) ? y : 0;
+    }
+    std::chrono::high_resolution_clock::time_point t2_loop = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time_loop = t2_loop - t1_loop;
+
+    std::chrono::high_resolution_clock::time_point t1_eigen = std::chrono::high_resolution_clock::now();
+
+    //X+X;
+    //Y+Y;
+
+    //X*X;
+    //Y*Y;
+
+    //X.exp();
+    //Y.exp();
+
+    //X.pow(2);
+    //Y.pow(2);
+
+    //X.tanh();
+    //Y.tanh();
+
+    //1/(1+(-X).exp());
+    //1/(1+(-Y).exp());
+
+    //X.max(0);
+    Y.max(0);
+
+    std::chrono::high_resolution_clock::time_point t2_eigen = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time_eigen = t2_eigen - t1_eigen;
+
+    std::cout << "temps loop: " << time_loop.count() << std::endl;
+    std::cout << "temps eigen: " << time_eigen.count() << std::endl;

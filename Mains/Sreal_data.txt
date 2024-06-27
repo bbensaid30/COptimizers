@@ -1,0 +1,183 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <iterator>
+#include <vector>
+#include <random>
+#include <chrono>
+#include <iomanip>
+
+#include <Eigen/Dense>
+#include <EigenRand/EigenRand>
+
+#include <omp.h>
+
+#include "init.h"
+#include "data.h"
+#include "training.h"
+#include "Straining.h"
+#include "test.h"
+#include "Stest.h"
+#include "tirage.h"
+#include "Stirage.h"
+
+int main()
+{
+    omp_set_num_threads(omp_get_num_procs());
+    //omp_set_num_threads(1);
+    Eigen::initParallel();
+
+   //Paramètres généraux
+    std::string const distribution="Xavier";
+    std::vector<double> const supParameters={-10,10};
+    int const tirageMin=0;
+    int const nbTirages=100;
+    int const nbSeeds=10;
+    std::string const famille_algo="Sclassic";
+    std::string const algo="SAdamA";
+    double const eps=std::pow(10,-4);
+    int const maxEpoch=100000;
+
+    //Paramètres des méthodes LM
+    double mu=100, factor=10, RMin=0.25, RMax=0.75, epsDiag=std::pow(10,-16), Rlim=std::pow(10,-4), factorMin=std::pow(10,-8), power=1.0, alphaChap=1.1, alpha=0.75, pas=0.1;
+    double tau=1, beta=2.0, gamma=3.0;
+    int const b=1, p=3;
+
+    double learning_rate=0.001;
+    double clip=1/learning_rate;
+    double seuil=0.01;
+    double beta1 = 1-0.985;
+    double beta2 = 1-0.999;
+
+    //int const nbPoints=550; Sdouble percTrain=0.1;
+    int const PTrain = 37760, PTest=16183;
+    int const batch_size = 10;
+    std::vector<Eigen::MatrixXd> dataTrain(2);
+    std::vector<Eigen::MatrixXd> data(4);
+    //dataTrain = twoSpiral(nbPoints);
+    //data = trainTestData(dataTrain,percTrain,true);
+    //data = Sonar(PTrain,PTest);
+    //data = Boston(PTrain,PTest);
+    data = Diamonds(PTrain,PTest);
+
+    int const n0=data[0].rows(), nL=data[1].rows();
+    int N=0;
+    int const L=3;
+    std::vector<int> nbNeurons(L+1);
+    std::vector<int> globalIndices(2*L);
+    std::vector<std::string> activations(L);
+    std::vector<Eigen::MatrixXd> weights(L);
+    std::vector<Eigen::VectorXd> bias(L);
+
+    //Architecture
+    int l;
+    nbNeurons[0]=n0;
+    for(int l=1; l<L; l++){nbNeurons[l]=30;}
+    nbNeurons[L]=nL;
+    for(int l=0;l<L-1;l++){activations[l]="GELU";}
+    activations[L-1]="linear";
+    for(l=0;l<L;l++)
+    {
+        N+=nbNeurons[l]*nbNeurons[l+1]; globalIndices[2*l]=N; N+=nbNeurons[l+1]; globalIndices[2*l+1]=N;
+    }
+
+    std::string const type_perte = "norme2";
+    std::vector<std::map<std::string,double>> studies(nbTirages*nbSeeds);
+    studies = StiragesRegression(data,L,nbNeurons,globalIndices,activations,type_perte,famille_algo,algo,supParameters,distribution,
+	tirageMin,nbTirages,eps,maxEpoch,learning_rate,beta1,beta2,batch_size,nbSeeds,true);
+    std::string folder = "Diamonds";
+    std::string fileExtension = "";
+    std::string const fileEnd = SinformationFile(PTrain,PTest,L,nbNeurons,activations,type_perte,algo,supParameters,distribution,tirageMin,nbTirages,learning_rate,batch_size,eps,maxEpoch,fileExtension);
+    SminsRecordRegression(studies,folder,fileEnd,eps);
+    
+}
+
+    
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    
+    omp_set_num_threads(omp_get_num_procs());
+    //omp_set_num_threads(1);
+    Eigen::initParallel();
+
+   //Paramètres généraux
+    std::string const distribution="Xavier";
+    std::vector<double> const supParameters={-10,10};
+    int const tirageMin=0;
+    int const nbTirages=1;
+    int const Sseed=40;
+    std::string const famille_algo="Perso";
+    std::string const algo="LC_EGD";
+    Sdouble const eps=std::pow(10,-2);
+    int const maxEpoch=200000;
+
+    //Paramètres des méthodes LM
+    Sdouble mu=100, factor=10, RMin=0.25, RMax=0.75, epsDiag=std::pow(10,-16), Rlim=std::pow(10,-4), factorMin=std::pow(10,-8), power=1.0, alphaChap=1.1, alpha=0.75, pas=0.1;
+    Sdouble tau=1, beta=2.0, gamma=3.0;
+    int const b=1, p=3;
+
+    Sdouble learning_rate=0.1;
+    Sdouble clip=1/learning_rate;
+    Sdouble seuil=0.01;
+    Sdouble beta1 = 1-0.9;
+    Sdouble beta2 = 1-0.999;
+
+    //int const nbPoints=100; Sdouble percTrain=0.5;
+    int const PTrain = 104, PTest=104;
+    int const batch_size = PTrain;
+    std::vector<Eigen::SMatrixXd> dataTrain(2);
+    std::vector<Eigen::SMatrixXd> data(4);
+    //dataTrain = twoSpiral(nbPoints);
+    //data = trainTestData(dataTrain,percTrain,true);
+    data = Sonar(PTrain,PTest);
+
+    int const n0=data[0].rows(), nL=data[1].rows();
+    int N=0;
+    int const L=2;
+    std::vector<int> nbNeurons(L+1);
+    std::vector<int> globalIndices(2*L);
+    std::vector<std::string> activations(L);
+    std::vector<Eigen::SMatrixXd> weights(L);
+    std::vector<Eigen::SVectorXd> bias(L);
+
+    //Architecture
+    int l;
+    nbNeurons[0]=n0;
+    for(int l=1; l<L; l++){nbNeurons[l]=30;}
+    nbNeurons[L]=nL;
+    for(int l=0;l<L-1;l++){activations[l]="GELU";}
+    activations[L-1]="sigmoid";
+    for(l=0;l<L;l++)
+    {
+        N+=nbNeurons[l]*nbNeurons[l+1]; globalIndices[2*l]=N; N+=nbNeurons[l+1]; globalIndices[2*l+1]=N;
+    }
+
+    std::string const type_perte = "norme2";
+    std::map<std::string,Sdouble> study;
+    initialisation(nbNeurons,weights,bias,supParameters,distribution,1);
+    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+    study = Strain(data[0],data[1],L,nbNeurons,globalIndices,activations,weights,bias,type_perte,famille_algo,algo,eps,maxEpoch,
+                learning_rate,beta1,beta2,batch_size,0);
+    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+    unsigned int time = std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count();
+    std::cout << "E: " << study["prop_entropie"] << std::endl;
+    std::cout << "gradientNorm: " << study["finalGradient"] << std::endl;
+    std::cout << "costFinal: " << study["finalCost"] << std::endl;
+    std::cout << "gradientPrec: " << study["finalGradient"].digits() << std::endl;
+    std::cout << "costFinalPrec: " << study["finalCost"].digits() << std::endl;
+    std::cout << "iterTot: " << study["epoch"] << std::endl;
+    std::cout << "iterForward: " << study["iterForward"] << std::endl;
+    if(numericalNoise(study["finalGradient"])){std::cout << "bruit" << std::endl;}
+    std::cout << "temps: " << time << std::endl;
+    
+    std::vector<Eigen::SMatrixXd> AsTrain(L+1), AsTest(L+1);
+    AsTrain[0]=data[0]; AsTest[0]=data[2];
+    std::vector<Eigen::SMatrixXd> slopes(L);
+    Sdouble costTest;
+    Sdouble rateTrain, rateTest;
+    fforward(L,PTrain,nbNeurons,activations,weights,bias,AsTrain,slopes);
+    fforward(L,PTest,nbNeurons,activations,weights,bias,AsTest,slopes);
+    costTest = risk(data[3],PTest,AsTest[L],type_perte);
+
+    classificationRate(data[1],data[3],AsTrain[L],AsTest[L],PTrain,PTest,rateTrain,rateTest);
+    std::cout << "classTrain: " << rateTrain << std::endl;
+    std::cout << "classTest: " << rateTest << std::endl;
