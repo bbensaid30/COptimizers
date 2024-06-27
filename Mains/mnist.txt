@@ -1,0 +1,56 @@
+   //Paramètres généraux
+    std::string const distribution="Xavier";
+    std::vector<double> const supParameters={-10,10};
+    int const tirageMin=0;
+    int const nbTirages=1000;
+    std::string const famille_algo="SGD";
+    std::string const algo="Adam";
+    Sdouble const eps=std::pow(10,-3);
+    int const maxIter=20000;
+    Sdouble const epsNeight=std::pow(10,-3);
+
+    //Paramètres des méthodes LM
+    Sdouble mu=100, factor=10, RMin=0.25, RMax=0.75, epsDiag=std::pow(10,-16), Rlim=std::pow(10,-4), factorMin=std::pow(10,-8), power=1.0, alphaChap=1.1, alpha=0.75, pas=0.1;
+    Sdouble tau=1, beta=2.0, gamma=3.0;
+    int const b=1, p=3;
+
+    Sdouble learning_rate=0.1;
+    Sdouble seuil=0.01;
+    Sdouble beta1 = 1-0.9;
+    Sdouble beta2 = 1-0.999;
+
+    int const PTrain = 404, PTest=102;
+    std::vector<Eigen::SMatrixXd> data(4);
+    data = Boston(PTrain,PTest);
+
+    int const n0=data[0].rows(), nL=data[1].rows();
+    int const batch_size=PTrain;
+    int N=0;
+    int const L=2;
+    std::vector<int> nbNeurons(L+1);
+    std::vector<int> globalIndices(2*L);
+    std::vector<std::string> activations(L);
+    std::vector<Eigen::SMatrixXd> weights(L);
+    std::vector<Eigen::SVectorXd> bias(L);
+
+    //Architecture
+    int l;
+    nbNeurons[0]=n0;
+    nbNeurons[1]=10;
+    nbNeurons[2]=nL;
+    activations[0]="reLU";
+    activations[1]="linear";
+    for(l=0;l<L;l++)
+    {
+        N+=nbNeurons[l]*nbNeurons[l+1]; globalIndices[2*l]=N; N+=nbNeurons[l+1]; globalIndices[2*l+1]=N;
+    }
+
+    std::string const type_perte = "norme2";
+    std::vector<std::map<std::string,Sdouble>> studies(nbTirages);
+    studies = tirages(data,l,nbNeurons,globalIndices,activations,type_perte,
+    famille_algo,algo,supParameters,distribution,tirageMin,nbTirages,eps,maxIter,
+    learning_rate,seuil,beta1,beta2,batch_size,mu,factor,RMin,RMax,b,alpha,pas,Rlim,factorMin,power,alphaChap,epsDiag,
+    false,false);
+    std::string folder = "Boston";
+    std::string const fileEnd = informationFile(PTrain,PTest,L,nbNeurons,activations,type_perte,algo,supParameters,distribution,tirageMin,nbTirages,eps,maxIter);
+    minsRecord(studies,folder,fileEnd,eps);

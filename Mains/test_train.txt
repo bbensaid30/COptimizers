@@ -1,0 +1,25 @@
+Eigen::SMatrixXd X(1,2), Y(1,2);
+    X(0,0)=0; X(0,1)=1; Y(0,0)=0; Y(0,1)=0;
+    int const n0=X.rows(), nL=Y.rows();
+    int N=0;
+    int const L=1;
+    std::vector<int> nbNeurons(L+1);
+    std::vector<int> globalIndices(2*L);
+    std::vector<std::string> activations(L);
+    std::vector<Eigen::SMatrixXd> weights(L);
+    std::vector<Eigen::SVectorXd> bias(L);
+
+//Architecture
+    int l;
+    nbNeurons[0]=n0;
+    nbNeurons[1]=nL;
+    activations[0]="polyTwo";
+    for(l=0;l<L;l++)
+    {
+        N+=nbNeurons[l]*nbNeurons[l+1]; globalIndices[2*l]=N; N+=nbNeurons[l+1]; globalIndices[2*l+1]=N;
+    }
+
+    std::map<std::string,Sdouble> study;
+    initialisation(nbNeurons,weights,bias,supParameters,distribution,25);
+    study = train_SGD(X,Y,L,nbNeurons,globalIndices,activations,weights,bias,"norme2",algo,learning_rate,batch_size,eps,maxIter);
+    std::cout << "Poids final: (" << weights[0](0,0) << ", " << bias[0](0) << ") " << std::endl;

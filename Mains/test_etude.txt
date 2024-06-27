@@ -1,0 +1,82 @@
+// Charger les données
+    std::vector<Eigen::SMatrixXd> dataTrain(2);
+    std::vector<Eigen::SMatrixXd> dataTrainTest(4);
+    int const nbPoints=200; Sdouble const percTrain=0.5; bool const reproductible=true;
+    dataTrain = sineWave(nbPoints);
+    dataTrainTest = trainTestData(dataTrain,percTrain,reproductible);
+    //standardization(dataTrainTest[0]); //standardization(dataTrainTest[2]);
+
+    // Architecture
+    int const n0=dataTrainTest[0].rows(), nL=dataTrainTest[1].rows(), P=dataTrainTest[0].cols();
+    int N=0;
+    int const L=1;
+    std::vector<int> nbNeurons(L+1);
+    std::vector<int> globalIndices(2*L);
+    std::vector<std::string> activations(L);
+    int l;
+    for(int l=0;l<L;l++)
+    {
+        nbNeurons[l]=1;
+        activations[l]="reLU";
+    }
+    nbNeurons[0]=1;
+    nbNeurons[L]=1;
+    if(L>=2){activations[L-1]="linear";}
+//    nbNeurons[0]=1;
+//    nbNeurons[1]=1;
+//    nbNeurons[2]=1;
+//    activations[0]="reLU";
+//    activations[1]="linear";
+    for(l=0;l<L;l++)
+    {
+       N+=nbNeurons[l]*nbNeurons[l+1]; globalIndices[2*l]=N; N+=nbNeurons[l+1]; globalIndices[2*l+1]=N;
+    }
+
+    // Paramètres d'initialisation
+    std::string const generator="uniform";
+    std::vector<double> supParameters = {-10,10};
+
+
+    //Estimation de l'erreur sur un forward
+    std::vector<Eigen::SMatrixXd> weights(L);
+    std::vector<Eigen::SVectorXd> bias(L);
+    std::vector<Eigen::SMatrixXd> As(L+1); As[0]=dataTrainTest[0];
+    std::vector<Eigen::SMatrixXd> slopes(L);
+    Eigen::SMatrixXd E(nbNeurons[L],P);
+    Eigen::SVectorXd gradient = Eigen::SVectorXd::Zero(N);
+    Eigen::SMatrixXd Q = Eigen::SMatrixXd::Zero(N,N);
+    initialisation(nbNeurons,weights,bias,supParameters,generator,1000);
+    fforward(dataTrainTest[0],dataTrainTest[1],L,P,nbNeurons,activations,weights,bias,As,slopes,E);
+    Sdouble cost = 0.5*E.squaredNorm();
+    backward(L,P,nbNeurons,globalIndices,weights,bias,As,slopes,E,gradient,Q);
+
+    double costDigit = cost.digits(), gradientDigits = gradient.norm().digits();
+    int prec = (int) std::floor(std::min(costDigit,gradientDigits));
+    std::cout << "cost digit: " << costDigit << std::endl;
+    std::cout << "gradient digit: " << gradientDigits << std::endl;
+    std::cout << "prec: " << prec << std::endl;
+
+    // Paramètres d'entraînement
+    std::string const algo="LMF";
+    Sdouble eps=std::pow(10,-7);
+    Sdouble mu=10, factor=10, RMin=0.25, RMax=0.75, epsDiag=std::pow(10,-16), Rlim=std::pow(10,-4), factorMin=std::pow(10,-8), power=1.0, alphaChap=1.1, alpha=0.75, pas=0.1;
+    Sdouble tau=1, beta=2.0, gamma=3.0, sigma=0.1, radiusBall=std::pow(10,0);
+    std::string const norm="2";
+    int const b=1, p=3;
+    int const tirageDisplay = 500, tirageMin=0;
+    int const maxIter=2000; Sdouble const epsClose=std::pow(10,-3);
+    int const nbTirages=10000, nbDichotomie=std::pow(2,4);
+    std::string const strategy="CostSd"; Sdouble const flat=0.01;
+
+    std::string const activationString = "reLUl";
+    std::string const folder = "sineWave/PTrain=100|PTest=100|width=1|"+activationString;
+    std::string const fileExtension = "1-";
+    minsRecord(dataTrainTest,L,nbNeurons,globalIndices,activations,supParameters,generator,algo,nbTirages,eps,maxIter,mu,factor,RMin,RMax,b,alpha,pas,Rlim,factorMin,power,alphaChap,epsDiag,
+    tau,beta,gamma,p,sigma,norm,radiusBall,tirageMin,tirageDisplay,folder,fileExtension);
+    //denombrementMinsPost(dataTrainTest,L,nbNeurons,globalIndices,activations,algo,epsClose,nbDichotomie,eps,tirageDisplay,strategy,flat,folder,fileExtension);
+
+
+    //double const x=0.5, aGraphic=0.5, bGraphic=7, pasGraphic=0.1;
+    //nbMinsFlats(dataTrainTest,L,nbNeurons,globalIndices,activations,algo,epsClose,nbDichotomie,eps,folder,fileExtension,x,aGraphic,bGraphic,pasGraphic,strategy);
+
+    //Shaman::displayUnstableBranches();
